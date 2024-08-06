@@ -13,28 +13,39 @@ const route = useRoute();
 
 const API_ENDPOINT = ''; // relative api link
 
+const uuid = ref<string>(route.params.uuid as string);
 const val = ref<string>(route.params['uuid'] as string); // input content string
 const isError = ref(false);  // request error
 const isLoading = ref(false); // request loading status
 const isInputError = ref(false); // input validator result
-const isInputEmpty = ref(val.value?.length === 0);
+const isInputEmpty = ref(!val.value);
+console.log("inVal: "+isInputEmpty.value)
 const profilesData = ref<Array<any> | undefined>(); // server response
 let currentProfile:string;
 
 
 if(route.params['uuid']){
   getData();
-  console.log("get data on setup");
 }
 
 //============================== Input Validation ==================================================
 
-watch(val, (newValue)=> {
-  if((isInputEmpty.value = newValue.length == 0)) warningText.value='';
+const validator = (val : string | undefined) => { // input validator
+  return !(val && val.length > 40);
+}
+
+
+watch(val, (newValue)=> { //watch if input is empty
+  if((isInputEmpty.value = newValue.length == 0)){
+    warningText.value='';
+    if(uuid.value) {
+      router.push('/');
+    }
+  }
 });
 
 
-watch(isError, (val) => {
+watch(isError, (val) => { //watch input validator check state
   isInputError.value = val
   if(val){
     warningText.value = "Разрешенная длина uuid: до 40 символов включительно"
@@ -43,8 +54,9 @@ watch(isError, (val) => {
   }
 });
 
-watch(() => route.params, (newValue, oldValue) => {
+watch(() => route.params, (newValue, oldValue) => { //watch router params
   if(newValue.uuid != oldValue.uuid) {
+      uuid.value = newValue.uuid as string;
       if(currentProfile != newValue.uuid) {
         val.value = newValue.uuid ? newValue.uuid as string : '';
         if (typeof newValue.uuid == typeof undefined) {
@@ -57,20 +69,7 @@ watch(() => route.params, (newValue, oldValue) => {
   }
 })
 
-/*
-const allowedPattern = /^[0-9]+$/;
-const validator = (val: string | undefined) => {
-  if(val && allowedPattern){
-    return allowedPattern.test(val);
-  }else{
-    return true;
-  }
-}
-*/
-const validator = (val : string | undefined) => {
-  return !(val && val.length > 40);
 
-}
 //============================== Request functionality =============================================
 
 // api request
@@ -89,7 +88,6 @@ const warningText = ref('');
 
 // api request & result processing
 function getData(){
-  console.log("getData!");
   isLoading.value = true;
   fetchData(val.value).then((response) => {
     profilesData.value = response;
@@ -97,6 +95,7 @@ function getData(){
     router.push(val.value);
     currentProfile = val.value;
     }).catch((err:AxiosError)=>{
+      profilesData.value = [];
       let isNetworkError = false;
       if(err.code == "ERR_NETWORK") isNetworkError = true;
       if(err.response?.status !== 404){
@@ -143,7 +142,7 @@ function getData(){
 
 <template>
   <div class = "wrpr">
-    <ByteTransitLeftCornerLogo class="bt-logo"/>
+    <ByteTransitLeftCornerLogo @logo-click="router.push('/')" class="bt-logo"/>
     <div class = "mainblock">
       <div class = 'form_content' :class="{mobile_hidden: profilesData?.length}">
         <div class = 'title'>Проверка корректности профиля</div>
@@ -220,6 +219,21 @@ function getData(){
 .profileCard{
   max-width: 560px;
 }
+.profileCard:deep(.tooltip){
+  left: 100%;
+  cursor: auto;
+  pointer-events: none;
+}
+.profileCard:deep(.tooltip).copyEvent{
+  animation: none;
+}
+@media(max-width: 1052px){
+  .profileCard:deep(.tooltip){
+    top: -100%;
+    left: auto;
+    right: -135%;
+  }
+}
 .form_content{
   padding: 0 50px 0 0;
   display: flex;
@@ -237,6 +251,7 @@ function getData(){
   }
   .profileCard:deep(.profilesList){
     max-height: calc(100vh - 204px);
+    min-height: 210px;
   }
   .profileCard:deep(.exit-ico){
     display: block;
@@ -275,7 +290,8 @@ function getData(){
     display: none;
   }
   .profileCard:deep(.profilesList){
-    max-height: min(calc(100vh - 324px), 568px);
+    max-height: min(calc(100vh - 324px), 580px);
+    min-height: 220px;
   }
   .profileCard:deep(.exit-ico) {
     display: none;

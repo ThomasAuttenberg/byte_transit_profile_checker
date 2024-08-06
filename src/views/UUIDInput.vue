@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { type PropType, ref, watch } from 'vue'
+import { nextTick, type PropType, ref, type VNodeRef, watch } from 'vue'
 type Validator = (val: string|undefined) => boolean;
 const props = defineProps({
   placeholder: {type: String, required: false, default: ''},
@@ -13,6 +13,7 @@ const isFocus = ref(false);
 const inputVal = defineModel<string>('inputVal');
 const isComplete  = ref(Boolean(inputVal.value?.length));
 const isError = defineModel<boolean>('inputError');
+const inptRef = ref<VNodeRef | null>(null);
 
 watch(inputVal, (value)=>{
   if(props.validator) {
@@ -23,6 +24,18 @@ watch(inputVal, (value)=>{
 
 function onRemovalBtnClick(){
   inputVal.value = '';
+  console.log(inptRef.value);
+  const inputEl = inptRef.value as HTMLInputElement;
+  console.log(inputEl);
+  setTimeout(()=>inputEl.focus());
+}
+
+function setCursorToEnd(event: Event) {
+  const target = event.target as HTMLInputElement;
+  setTimeout(() => {
+    target.setSelectionRange(target.value.length, target.value.length);
+    target.scrollLeft = target.scrollWidth;
+  });
 }
 
 </script>
@@ -30,9 +43,10 @@ function onRemovalBtnClick(){
 <template>
   <div class = "input-wrapper" :class="{focus:isFocus, error:isError, complete:isComplete}">
     <span v-if="isFocus || isComplete" class = "additionalPlaceholder">{{placeholder}}</span>
-  <input class="input" value='' v-model="inputVal" :placeholder="!isFocus ? placeholder : ''"
-         @focusin="isFocus = true"
+  <input ref = "inptRef" class="input" value='' v-model="inputVal" :placeholder="!isFocus ? placeholder : ''"
+         @focusin="isFocus = true; setCursorToEnd($event)"
          @focusout="isFocus = false;" />
+
     <span v-if="isComplete" class = "valRemoval" @click="onRemovalBtnClick">×</span>
   </div>
 </template>
@@ -57,7 +71,7 @@ function onRemovalBtnClick(){
   .input{
     min-width:220px;
     width: 100%;
-    padding: 0px 13.5px 0 45px;
+    padding: 0px 20px 0 45px;
     font-family:  "Montserrat", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
@@ -78,6 +92,8 @@ function onRemovalBtnClick(){
     color: rgb(148,148,148);
   }
   .input:focus, .input-wrapper.complete > .input{
+    text-overflow: ellipsis;
+    padding-right: 35px;
     padding-top: 15px;
   }
   .input:focus{

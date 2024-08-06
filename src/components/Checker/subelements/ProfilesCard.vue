@@ -102,7 +102,7 @@ onMounted(()=>{
   <div class ="manager_info_block" v-if="chosenProfile >= 0 && adaptedProfilesData && adaptedProfilesData[chosenProfile]['manager']">
     <div class = "content-block">
       <span class="manager_title">МЕНЕДЖЕР</span>
-      <span class="manager_name">&nbsp;{{adaptedProfilesData[chosenProfile]['manager']}}</span>
+      <span class="manager_name">{{adaptedProfilesData[chosenProfile]['manager']}}</span>
     </div>
   </div>
   </div>
@@ -160,6 +160,7 @@ onMounted(()=>{
   }
 
   .manager_name{
+    padding-left: 10px;
     font-weight: 600;
     font-size: 15px;
     line-height: 150%;
@@ -205,7 +206,7 @@ onMounted(()=>{
     min-height: 30px;
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   .placeholder{
 

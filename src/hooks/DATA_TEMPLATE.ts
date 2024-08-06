@@ -64,6 +64,7 @@ export const DATA_TEMPLATE
 
 export function useAdapter(field:string, value:any){
   const templateObj = DATA_TEMPLATE.filter((val)=>val.field === field)[0];
+  if(value == null) return null;
   if(templateObj.adapterFunction){
     return templateObj.adapterFunction(value);
   }else{

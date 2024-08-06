@@ -18,8 +18,8 @@ function onClick(){
     <div class = "content-block">
       <div class = "inline-title-ico">
       <div class = "title">{{data['name']}}
-        <div class="ico" @click = "onClick"></div>
       </div>
+        <div class="ico" @click = "onClick"></div>
       </div>
       <InformationField v-if="data['inn']" :copyable="false" :text="data['inn']" :label="getTemplateLabel('inn')+':'"/>
       <InformationField v-if="data['kpp']" :copyable="false" :text="data['kpp']" :label="getTemplateLabel('kpp')+':'"/>
@@ -32,8 +32,6 @@ function onClick(){
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 .ico{
   cursor: pointer;
-  position: absolute;
-  right: 0;
   width: 30px;
   height: 30px;
   content: url("@/assets/icons/goto.svg");
@@ -43,8 +41,12 @@ function onClick(){
   transform: scaleX(-1);
 }
 .inline-title-ico{
-  position: relative;
-  padding-right:40px;
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
 }
 .title{
   font-family: 'Monserrat',sans-serif;
@@ -52,7 +54,6 @@ function onClick(){
   font-size: 15px;
   line-height: 150%;
   text-transform: uppercase;
-  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
 }

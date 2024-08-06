@@ -23,7 +23,7 @@ import phone_img from "@/assets/icons/phone.svg";
       <InformationField v-if="data['email']" :copyable="true" :text="data['email']" :label="getTemplateLabel('email')+':'"/>
     </div>
     <div class = "contact-block-title">Контактное лицо</div>
-    <div class = "content-block">
+    <div class = "content-block contact-block">
       <InformationField class="specified_field" :ico="profile_ico" v-if="data['contact_name']" :copyable="true" :text="data['contact_name']" />
       <InformationField class="specified_field" :ico="phone_img" v-if="data['contact_phone']" :copyable="true" :text="data['contact_phone']" />
     </div>
@@ -74,5 +74,8 @@ import phone_img from "@/assets/icons/phone.svg";
   border-radius: 20px;
   padding: 20px;
   background: #f8f8f8;
+}
+.contact-block{
+  padding: 15px 15px 15px 20px;
 }
 </style>
