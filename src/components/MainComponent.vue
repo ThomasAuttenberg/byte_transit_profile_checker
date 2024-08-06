@@ -19,7 +19,6 @@ const isError = ref(false);  // request error
 const isLoading = ref(false); // request loading status
 const isInputError = ref(false); // input validator result
 const isInputEmpty = ref(!val.value);
-console.log("inVal: "+isInputEmpty.value)
 const profilesData = ref<Array<any> | undefined>(); // server response
 let currentProfile:string;
 

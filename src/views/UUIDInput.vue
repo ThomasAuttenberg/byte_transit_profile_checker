@@ -24,9 +24,9 @@ watch(inputVal, (value)=>{
 
 function onRemovalBtnClick(){
   inputVal.value = '';
-  console.log(inptRef.value);
+  //console.log(inptRef.value);
   const inputEl = inptRef.value as HTMLInputElement;
-  console.log(inputEl);
+  //console.log(inputEl);
   setTimeout(()=>inputEl.focus());
 }
 
