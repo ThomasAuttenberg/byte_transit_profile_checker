@@ -11,7 +11,7 @@
 ## Описание сервиса:</br>
 Сервис разработан с целью предоставлять профили пользователей по их уникальному идентификатору.
 Первоначальное окно предоставляет окно запроса:</br></br>
-![image](https://github.com/user-attachments/assets/32a99b28-51c0-4b82-ad77-7b7e1bc67751)
+![image](https://github.com/user-attachments/assets/3cd6af58-d40a-4577-a545-6eee1b75f366)
 </br></br>
 Для того, чтобы запрос был отправлен, нужно ввести uuid и нажать клавишу ввода или кнопку "Проверить". Сразу после этого произойдет загрузка найденный профилей:</br></br>
 ![image](https://github.com/user-attachments/assets/bb25309c-4ba7-47bf-b067-20669abcab96)
@@ -20,7 +20,7 @@
 ![image](https://github.com/user-attachments/assets/ca617de1-24c9-494e-9c5d-232915f22e11)</br></br>
 
 Ссылку на профиль пользователя и каждое из установленных полей можно скопировать нажатием мыши на соответствующую кнопку</br></br>
-![image](https://github.com/user-attachments/assets/21d748dd-5c78-476e-ae0d-877a8a1a446a)
+![image](https://github.com/user-attachments/assets/2a6517c0-f228-4fa5-9e09-e75c4bfa6e57)
 </br></br>
 При вводе идентификатора, не связанного с профилем пользователя, будет выведена соответствующая ошибка:</br></br>
 ![image](https://github.com/user-attachments/assets/9f95cd16-6268-47f6-bdba-61e90cf53a70)</br></br>
