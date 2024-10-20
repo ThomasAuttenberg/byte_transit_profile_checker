@@ -10,7 +10,13 @@ const router = createRouter({
       component: Main,
     },
     {
-      path: '/:uuid',
+      path: '/:criteria/:query',
+      name: 'search',
+      component: Main,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
       component: Main,
     }
   ]

@@ -1,25 +1,70 @@
 <script setup lang="ts">
 
-import { nextTick, type PropType, ref, type VNodeRef, watch } from 'vue'
+import { type PropType, ref, type VNodeRef, watch } from 'vue'
+import { IMask } from 'vue-imask'
 type Validator = (val: string|undefined) => boolean;
 const props = defineProps({
+  ico: {type: URL},
   placeholder: {type: String, required: false, default: ''},
   validator: {type: Function as PropType<Validator>},
   inputError: {type: Boolean, default: false},
-  allowedPattern: {type:RegExp, required:false}
+  mask: {type: Object as PropType<any>}
 });
+
+function getUnmaskedValue(){return unmaskedVal}
+
+defineExpose({getUnmaskedValue});
 
 const isFocus = ref(false);
 const inputVal = defineModel<string>('inputVal');
+let unmaskedVal : string = '';
 const isComplete  = ref(Boolean(inputVal.value?.length));
 const isError = defineModel<boolean>('inputError');
 const inptRef = ref<VNodeRef | null>(null);
+let iMaskObject = props.mask ? IMask.createMask(props.mask) : null;
 
-watch(inputVal, (value)=>{
-  if(props.validator) {
-    isError.value = !props.validator(value);
+
+const getMaskedValue = (input: string)=>{
+  if(iMaskObject) {
+    iMaskObject.resolve(input);
+    return iMaskObject.value;
   }
+  return null;
+}
+
+if(inputVal.value){
+  if(iMaskObject){
+    iMaskObject.resolve(inputVal.value);
+    unmaskedVal = iMaskObject.unmaskedValue;
+    inputVal.value = getMaskedValue(inputVal.value);
+  }
+}
+
+watch(()=>props.mask, (value)=>{
+  if(value){
+    iMaskObject = IMask.createMask(value);
+  }
+})
+watch(inputVal, (value)=>{
   isComplete.value = !!value?.length;
+  if(isComplete.value) {
+    if (iMaskObject && value) {
+      inputVal.value = getMaskedValue(value);
+      //console.log("input:" + inputVal.value)
+      unmaskedVal = iMaskObject.unmaskedValue;
+      //console.log("unmasked:" + iMaskObject.unmaskedValue);
+      //console.log("При этом: "+ unmaskedVal);
+    }else{
+      if(value)
+        unmaskedVal = value;
+    }
+    if (props.validator) {
+      isError.value = !(props.validator(unmaskedVal));
+      //console.log(unmaskedVal);
+    }
+  }else{
+    isError.value = false;
+  }
 });
 
 function onRemovalBtnClick(){
@@ -41,7 +86,10 @@ function setCursorToEnd(event: Event) {
 </script>
 
 <template>
-  <div class = "input-wrapper" :class="{focus:isFocus, error:isError, complete:isComplete}">
+  <div class = "input-wrapper" :class="{focus:isFocus, error:isError, complete:isComplete}"
+       :style="{
+          '--icon-url': `url(${ico})`
+       }">
     <span v-if="isFocus || isComplete" class = "additionalPlaceholder">{{placeholder}}</span>
   <input ref = "inptRef" class="input" value='' v-model="inputVal" :placeholder="!isFocus ? placeholder : ''"
          @focusin="isFocus = true; setCursorToEnd($event)"
@@ -107,7 +155,7 @@ function setCursorToEnd(event: Event) {
     position: absolute;
     padding: 10px;
     left: 0;
-    content: url("@/assets/icons/profileico.svg");
+    content: var(--icon-url);
   }
   .valRemoval{
     position: absolute;

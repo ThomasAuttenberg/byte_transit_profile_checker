@@ -16,6 +16,7 @@
     "axios": "^1.7.2",
     "ts-color-class": "^0.10.1",
     "vue": "^3.4.29",
+    "vue-imask": "^7.6.1",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {

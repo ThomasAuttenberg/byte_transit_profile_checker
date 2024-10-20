@@ -2,42 +2,147 @@
 
 import ByteTransitLeftCornerLogo from "@/views/ByteTransitLeftCornerLogo.vue";
 import UUIDInput from "@/views/UUIDInput.vue";
-import { ref, watch } from 'vue'
+import { ref, type VNodeRef, watch } from 'vue'
 import ProfilesCard from '@/components/Checker/subelements/ProfilesCard.vue'
 import Button from '@/views/Button.vue'
 import APIFetch from '@/hooks/APIFetch'
 import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
+import PrettyDropList from '@/views/PrettyDropList.vue'
 const router = useRouter();
 const route = useRoute();
 
 const API_ENDPOINT = ''; // relative api link
 
-const uuid = ref<string>(route.params.uuid as string);
-const val = ref<string>(route.params['uuid'] as string); // input content string
+const criteria = ref<string>(route.params.criteria as string);
+const query = ref<string>(route.params.query as string);
+const inputValue = ref<string>(''); // input content string
 const isError = ref(false);  // request error
 const isLoading = ref(false); // request loading status
-const isInputError = ref(false); // input validator result
-const isInputEmpty = ref(!val.value);
+const isInputEmpty = ref<boolean>(true);
+const inputRef = ref<VNodeRef | null>(null);
 const profilesData = ref<Array<any> | undefined>(); // server response
-let currentProfile:string;
+const mode = ref<InputMode>();
+const selected = ref<number>(-1);
+
+//console.log(criteria.value)
+//console.log(query.value)
+
+interface InputMode {
+  mode: string;
+  mask: any; // Здесь можно уточнить тип в зависимости от используемой библиотеки для масок
+  label: string;
+  validator: (val?: string) => boolean;
+  errorText: string;
+  inputIco: URL; // Предполагается, что это строка с URL
+  inputPlaceholder: string;
+  middleware?: (val: string) => string;
+}
+
+const inputModes : InputMode[] = [
+  {
+    mode: "phone",
+    mask: {
+      mask:'+{7}(000)000-00-00',
+      prepare: (appended:string, masked:any) => {
+        if (appended[0] === '8' && masked.value === '') {
+          return '+7'+appended.slice(1);
+        }
+        return appended;
+      },
+    },
+    label: 'Искать по номеру телефона',
+    validator: (val:string | undefined) => {return val? val.length == 11 : false},
+    errorText: 'Номер телефона должен содержать 11 цифр',
+    inputIco: new URL("@/assets/icons/phone-ico.svg", import.meta.url),
+    inputPlaceholder: 'Телефон',
+    middleware: (value:string) : string => {
+       return 8 + value.slice(1);
+    }
+  },
+  {
+    mode: "uuid",
+    mask: { mask: /^[A-Za-z0-9-]{0,50}$/, },
+    label: 'Искать по УИН',
+    validator: (val:string | undefined) => {return val? val.length <= 50 : false},
+    errorText: 'UUID не может содержать более 50 символов',
+    inputIco: new URL("@/assets/icons/profileico.svg", import.meta.url),
+    inputPlaceholder: 'Уникальный идентификатор'
+  },
+  {
+    mode: "inn",
+    mask: { mask: /^\d{0,14}$/ },
+    label: 'Искать по ИНН',
+    validator: (val:string | undefined) => {return val? val.length >= 9 && val.length <= 14:false},
+    errorText: 'ИНН должен содержать от 9 до 14 цифр',
+    inputIco: new URL("@/assets/icons/inn-ico.svg", import.meta.url),
+    inputPlaceholder: 'ИНН'
+  },
+  {
+    mode: "login",
+    mask: { mask: /^[a-zA-Z0-9_]{0,50}$/ },
+    label: 'Искать по логину',
+    validator: (val:string | undefined) => {return val ? val.length > 0 && val.length<=50: false},
+    errorText: 'Логин не должен быть пустым',
+    inputIco: new URL("@/assets/icons/profileico.svg", import.meta.url),
+    inputPlaceholder: 'Логин'
+  },
+  {
+    mode: "email",
+    mask: {mask: /^[a-zA-Z0-9._%+-]*@?[a-zA-Z0-9.-]*\.?[a-zA-Z]{0,6}$/ },
+    label: 'Искать по почте',
+    validator: (val:string | undefined) => {return  val? /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(val) && val.length<=50 : false},
+    errorText: 'Почта введена некорректно',
+    inputIco: new URL("@/assets/icons/mail-ico.svg", import.meta.url),
+    inputPlaceholder: 'Почта'
+  },
+  {
+    mode: "legal_name",
+    mask: { mask: /^[a-zA-Zа-яА-ЯёЁ0-9\s"'(),&-]{0,50}$/ },
+    label: 'Искать по наименованию',
+    validator: (val: string | undefined) => {return val? val.length<=50 : false},
+    errorText: 'Наименование не может содержать более 50 символов',
+    inputIco: new URL("@/assets/icons/legal-name-ico.svg", import.meta.url),
+    inputPlaceholder: 'Наименование'
+  }
+]
+
+const modeIndexMap: Record<string, number> = inputModes.reduce((acc, modeObj, index) => {
+  acc[modeObj.mode] = index; // Устанавливаем ключ как значение mode, а значение — индекс
+  return acc; // Возвращаем аккумулятор
+}, {} as Record<string, number>);
 
 
-if(route.params['uuid']){
-  getData();
+if(criteria.value && query.value){
+  mode.value = inputModes[modeIndexMap[criteria.value]];
+  if(mode.value) {
+    selected.value = modeIndexMap[criteria.value];
+    if(mode.value.validator(query.value)) {
+      inputValue.value = query.value;
+      isInputEmpty.value = false;
+      getData();
+    } else {
+      router.push('/');
+    }
+  }else{
+    router.push('/');
+  }
+}else{
+  if(route.params){
+    router.push('/');
+  }
 }
 
 //============================== Input Validation ==================================================
 
 const validator = (val : string | undefined) => { // input validator
-  return !(val && val.length > 40);
+  return !(val && val.length > 50);
 }
 
-
-watch(val, (newValue)=> { //watch if input is empty
+watch(inputValue, (newValue)=> { //watch if input is empty
   if((isInputEmpty.value = newValue.length == 0)){
     warningText.value='';
-    if(uuid.value) {
+    if(criteria.value && query.value) {
       router.push('/');
     }
   }
@@ -45,23 +150,23 @@ watch(val, (newValue)=> { //watch if input is empty
 
 
 watch(isError, (val) => { //watch input validator check state
-  isInputError.value = val
   if(val){
-    warningText.value = "Разрешенная длина uuid: до 40 символов включительно"
+    warningText.value = inputModes[selected.value].errorText;
   }else{
     warningText.value = '';
   }
 });
 
 watch(() => route.params, (newValue, oldValue) => { //watch router params
-  if(newValue.uuid != oldValue.uuid) {
-      uuid.value = newValue.uuid as string;
-      if(currentProfile != newValue.uuid) {
-        val.value = newValue.uuid ? newValue.uuid as string : '';
-        if (typeof newValue.uuid == typeof undefined) {
+  if(newValue.criteria != oldValue.criteria || newValue.query != oldValue.query) {
+      query.value = newValue.query as string;
+      criteria.value = newValue.criteria as string;
+      if(query.value != newValue.query || criteria.value != newValue.criteria) {
+        inputValue.value = newValue.query ? newValue.query as string : '';
+        if (typeof newValue.criteria == typeof undefined || typeof newValue.query == typeof undefined) {
           profilesData.value = [];
-          currentProfile = '';
         } else {
+
           getData();
         }
       }
@@ -72,10 +177,11 @@ watch(() => route.params, (newValue, oldValue) => { //watch router params
 //============================== Request functionality =============================================
 
 // api request
-async function fetchData(uuid: string) {
+async function fetchData(criteria: string, query: string) {
   const response = await APIFetch("post", API_ENDPOINT,
     {
-      uuid: uuid,
+      type: criteria,
+      value: query,
     }
   );
   if(!Array.isArray(response.data))
@@ -88,11 +194,15 @@ const warningText = ref('');
 // api request & result processing
 function getData(){
   isLoading.value = true;
-  fetchData(val.value).then((response) => {
+  let searchingQuery = inputRef.value ? inputRef.value.getUnmaskedValue() : route.params.query;
+  if(mode.value?.middleware){
+    searchingQuery = mode.value.middleware(searchingQuery);
+  }
+  fetchData((mode.value as InputMode).mode, searchingQuery).then((response) => {
     profilesData.value = response;
     warningText.value = "";
-    router.push(val.value);
-    currentProfile = val.value;
+    //console.log("query: "+searchingQuery);
+    router.push({name:'search', params:{criteria:mode.value?.mode, query:searchingQuery}})
     }).catch((err:AxiosError)=>{
       profilesData.value = [];
       let isNetworkError = false;
@@ -135,6 +245,17 @@ function getData(){
   });
 }
 
+//==================================================================
+
+
+const options : Array<string> = inputModes.map(mode => mode.label);
+
+watch(selected, (value:number) => {
+  inputValue.value='';
+  mode.value = inputModes[value];
+
+})
+
 
 
 </script>
@@ -145,16 +266,24 @@ function getData(){
     <div class = "mainblock">
       <div class = 'form_content' :class="{mobile_hidden: profilesData?.length}">
         <div class = 'title'>Проверка корректности профиля</div>
-        <UUIDInput class="inpt"
-                   @keydown.enter="val.length ? getData() : undefined"
-                   :validator="validator"
+        <PrettyDropList class="drop-list"
+                        v-model:selected="selected"
+                        :options
+                        :prop="'Искать по...'">
+        </PrettyDropList>
+        <UUIDInput ref="inputRef" v-show="selected != -1" class="inpt" style="margin-top: 10px"
+                   @keydown.enter="!(isError || isInputEmpty) ? getData() : undefined"
+                   :mask="inputModes[selected]?.mask"
                    v-model:inputError="isError"
-                   :placeholder="'Уникальный идентификатор'"
-                   v-model:input-val="val"/>
+                   :validator="inputModes[selected] ? inputModes[selected].validator : ()=>{return true;}"
+                   :placeholder="inputModes[selected] ? inputModes[selected].inputPlaceholder : 'Искать по...'"
+                   :ico="inputModes[selected]?.inputIco"
+                   v-model:input-val="inputValue"/>
+
         <Button class="form_button"
                 @click="getData();"
                 :is-loading="isLoading"
-                :is-disabled="isInputError || isInputEmpty"
+                :is-disabled="isError || isInputEmpty"
                 :button-text="'Проверить'"/>
         <div class = "warning" v-html="warningText">
         </div>
@@ -169,7 +298,12 @@ function getData(){
 .boldWarningText{
   font-weight: 600;
 }
-
+.drop-list{
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 150%;
+}
 .warning{
   padding-top: 10px;
   font-family: 'Monserrat', sans-serif;
