@@ -62,10 +62,10 @@ const inputModes : InputMode[] = [
   },
   {
     mode: "uuid",
-    mask: { mask: /^[A-Za-z0-9-]{0,50}$/, },
+    mask: { mask: /^[A-Za-z0-9-]{0,36}$/, },
     label: 'Искать по УИН',
     validator: (val:string | undefined) => {return val? val.length <= 50 : false},
-    errorText: 'UUID не может содержать более 50 символов',
+    errorText: 'UUID должен состоять из 36 символов',
     inputIco: new URL("@/assets/icons/profileico.svg", import.meta.url),
     inputPlaceholder: 'Уникальный идентификатор'
   },
@@ -80,7 +80,7 @@ const inputModes : InputMode[] = [
   },
   {
     mode: "login",
-    mask: { mask: /^[a-zA-Z0-9_]{0,50}$/ },
+    mask: { mask: /^[a-zA-Z0-9._%+-]*@?[a-zA-Z0-9.-]*\.?[a-zA-Z]{0,6}$/ },
     label: 'Искать по логину',
     validator: (val:string | undefined) => {return val ? val.length > 0 && val.length<=50: false},
     errorText: 'Логин не должен быть пустым',
@@ -98,7 +98,7 @@ const inputModes : InputMode[] = [
   },
   {
     mode: "legal_name",
-    mask: { mask: /^[a-zA-Zа-яА-ЯёЁ0-9\s"'(),&-]{0,50}$/ },
+    mask: { mask: /^[a-zA-Zа-яА-ЯёЁ0-9\s"'-]{0,50}$/ },
     label: 'Искать по наименованию',
     validator: (val: string | undefined) => {return val? val.length<=50 : false},
     errorText: 'Наименование не может содержать более 50 символов',
@@ -159,17 +159,14 @@ watch(isError, (val) => { //watch input validator check state
 
 watch(() => route.params, (newValue, oldValue) => { //watch router params
   if(newValue.criteria != oldValue.criteria || newValue.query != oldValue.query) {
-      query.value = newValue.query as string;
-      criteria.value = newValue.criteria as string;
-      if(query.value != newValue.query || criteria.value != newValue.criteria) {
-        inputValue.value = newValue.query ? newValue.query as string : '';
-        if (typeof newValue.criteria == typeof undefined || typeof newValue.query == typeof undefined) {
-          profilesData.value = [];
-        } else {
-
-          getData();
-        }
-      }
+    query.value = newValue.query as string;
+    criteria.value = newValue.criteria as string;
+    inputValue.value = newValue.query ? newValue.query as string : '';
+    if (!newValue.criteria || !newValue.query) {
+      profilesData.value = [];
+    } else {
+      getData();
+    }
   }
 })
 
@@ -212,7 +209,7 @@ function getData(){
         console.log(err);
       }
     switch(err.response?.status){
-      case 404: warningText.value='Введен некорректный УИН, либо профиль с таким УИНом отсутствует в базе данных учетной системы.</br>' +
+      case 404: warningText.value='Профиль с указанными данными отсутствует в базе данных учетной системы.</br>' +
         '<b>Попробуйте указать другой УИН.</b>';
         break;
       case 500: warningText.value="<b>Internal Server Error:</b> внутренняя ошибка сервера";
