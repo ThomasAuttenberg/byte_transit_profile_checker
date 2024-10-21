@@ -210,7 +210,7 @@ function getData(){
       }
     switch(err.response?.status){
       case 404: warningText.value='Профиль с указанными данными отсутствует в базе данных учетной системы.</br>' +
-        '<b>Попробуйте указать другой УИН.</b>';
+        '<b>Попробуйте указать другие данные.</b>';
         break;
       case 500: warningText.value="<b>Internal Server Error:</b> внутренняя ошибка сервера";
         break;
